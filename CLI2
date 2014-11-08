@@ -1,0 +1,201 @@
+Sample session of CLI tools
+---------------------------
+
+Пример: github.com/prj/pkg использует github.com/prj/pkg2,
+он в свою очередь github.com/prj/pkg3
+
+gopkg domain our.repo
+установит репозиторий для использования
+можно также указывать его при установке пакета
+
+$ gopkg -l
+github.com/prj/pkg3 (git/master) from our.repo
+
+$ gopkg github.com/prj/pkg3
+Uses local domain our.repo
+Uses GOPATH /home/axel/go
+Found github.com/prj/pkg3 (git)
+Load package... DONE
+Build package... DONE
+
+$ gopkg github.com/prj/pkg
+Uses local domain our.repo
+Found github.com/prj/pkg (git)
+Package will use installed dependenices: github.com/prj/pkg3
+Package will load dependencies: github.com/prj/pkg2 ...DONE
+Build deps... DONE
+Load package... DONE
+Build package... DONE
+
+$ gopkg -l
+github.com/prj/pkg (git/master) from our.repo
+github.com/prj/pkg2 (git/master) from our.repo
+github.com/prj/pkg3 (git/master) from our.repo
+
+В коде:
+
+import "github.com/prj/pkg"
+
+$ gopkg -c a1b2c3d4e5 github.com/prj/pkg v1.1
+Installed versions: our.repo/github.com/prj/pkg (git/master)
+Uses local domain our.repo
+Uses GOPATH /home/axel/go
+Package will use installed dependenices: github.com/prj/pkg2 github.com/prj/pkg3
+Deps already built
+Load package... DONE
+Build package... DONE
+Package installed as github.com/prj/pkg.v1.1
+
+$ gopkg -l
+github.com/prj/pkg (git/master) from our.repo
+github.com/prj/pkg.v1.1 (git/a1b2c3d4e5) from our.repo
+github.com/prj/pkg2 (git/master) from our.repo
+github.com/prj/pkg3 (git/master) from our.repo
+
+Без алиаса:
+$ gopkg -c a1b2c3d4e5 github.com/prj/pkg
+Installed versions: our.repo/github.com/prj/pkg (git/a1b2c3d4e5) as github.com/prj/pkg.v1.1
+Uses local domain our.repo
+Uses GOPATH /home/axel/go
+Package will use installed dependenices: github.com/prj/pkg2 github.com/prj/pkg3
+Deps already built
+Load package... DONE
+Build package... DONE
+Package installed as github.com/prj/pkg.v1.1
+
+$ gopkg -l
+github.com/prj/pkg (git/master) from our.repo
+github.com/prj/pkg.v1.1 (git/a1b2c3d4e5) from our.repo
+github.com/prj/pkg.a1b2c3d4e5 (git/a1b2c3d4e5) from our.repo
+github.com/prj/pkg2 (git/master) from our.repo
+github.com/prj/pkg3 (git/master) from our.repo
+
+$ gopkg -o pkg - установка пакета из оригинального репозитория, с гитхаба например
+$ gopkg -O pkg - установка пакета и его зависимостей из оригинального репозитория
+
+$ gopkg -o github.com/prj/pkg
+Conflicted versions:
+ our.repo: github.com/prj/pkg (git/master)
+Install FAILED
+Hint: make unique alias for package or make it local with `gopkg -d`
+
+Установка с алиасом:
+
+$ gopkg -o github.com/prj/pkg origv
+Installed versions: our.repo/github.com/prj/pkg (git/a1b2c3d4e5) as github.com/prj/pkg.v1.1
+Uses remote domain github.com
+Uses local domain github.com
+Uses GOPATH /home/axel/go
+Package will use installed dependenices: github.com/prj/pkg2 github.com/prj/pkg3
+Deps already built
+Load package... DONE
+Build package... DONE
+Package installed as github.com/prj/pkg.origv
+
+Установка в локальный домен:
+
+$ gopkg -o -d github.com/prj/pkg
+Installed versions: our.repo/github.com/prj/pkg (git/a1b2c3d4e5) as github.com/prj/pkg.v1.1
+Uses remote domain github.com
+Uses local domain our.repo
+Uses GOPATH /home/axel/go
+Package will use installed dependenices: github.com/prj/pkg2 github.com/prj/pkg3
+Deps already built
+Load package... DONE
+Build package... DONE
+Package installed as our.repo/prj/pkg
+
+Работа с окружением (набором пакетов)
+------------------------------------------
+
+Зарегистрированные окружения:
+
+$ goenv -l
+/home/axel/go (default)
+/home/axel/tv-prod
+/home/axel/tv-dev
+
+Зарегистрировать существующее окружение:
+
+$ goenv -a orig
+Found packages:
+ github.com/prj/pkg (git/master) from github.com
+ github.com/prj/pkg2 (git/master) from github.com
+ github.com/prj/pkg3 (git/master) from github.com
+Register ...DONE
+
+$ goenv /home/axel/tv-prod
+Switched GOPATH from /home/axel/go to /home/axel/tv-prod
+
+$ goenv -d
+Switched GOPATH from /home/axel/tv-prod to /home/axel/go (default)
+
+Используя файл .GODEPS или парсинг исходников можно создать новое окружение
+
+$ pwd
+/home/axel
+
+$ goenv create my/env1
+Find GOENV file ...FAILED
+
+Генерирует YAML файл с зависимостями окружения:
+
+$ gosrc make-deps
+Uses GOPATH /home/axel/env1
+Uses local domain our.repo
+Sources for `main` found
+Parse sources... DONE
+Need dependencies:
+ github.com/prj/pkg
+ github.com/prj/pkg2
+ github.com/prj/pkg3
+Found in current env:
+ github.com/prj/pkg (git/master) from our.repo
+ github.com/prj/pkg2 (git/master) from our.repo
+ github.com/prj/pkg3 (git/master) from our.repo
+Generate GOENV file ...DONE
+
+Теперь можно создать по нему окружение:
+
+$ goenv create my/env1
+Uses local domain our.repo
+Package will load dependencies: github.com/prj/pkg github.com/prj/pkg2 github.com/prj/pkg3 ...DONE
+Build deps ...DONE
+
+$ goenv env1
+Switched environment and GOPATH from /home/axel/go to /home/axel/my/env1
+
+$ pwd
+/home/axel
+
+$ goenv clone my/env1 tv2
+Clone /home/axel/my/env1 /home/axel/tv2 ...DONE
+
+$ goenv -l
+ /home/axel/go (default)
+ /home/axel/my/env1
+ /home/axel/tv2
+ /home/axel/tv-dev
+ /home/axel/tv-prod
+ /home/axel/orig
+
+$ goenv -lp
+/home/axel/go (default):
+ github.com/prj/pkg (git/master) from our.repo
+ github.com/prj/pkg.v1.1 (git/a1b2c3d4e5) from our.repo
+ github.com/prj/pkg.a1b2c3d4e5 (git/a1b2c3d4e5) from our.repo
+ github.com/prj/pkg2 (git/master) from our.repo
+ github.com/prj/pkg3 (git/master) from our.repo
+/home/axel/my/orig:
+ github.com/prj/pkg (git/master) from github.com
+ github.com/prj/pkg2 (git/master) from github.com
+ github.com/prj/pkg3 (git/master) from github.com
+
+
+gopkg - ставит и удаляет пакеты из репозиториев, умеет ставить указанные версии и задавать им алиасы.
+GOENV-файлы идут с исходниками и описывают требуемые версии зависимостей, а также репозитории откуда их брать.
+Если GOENV отсутствует, то версии зависимостей берутся из текущего окружения или иначе вычисляются по операторам import и берутся из trunk
+gosrc - парсит исходники, создаёт GOENV файлы, умеет их рефакторить для смены версий в import
+goenv - создаёт и переключает окружения
+
+gopkgd -d domain - публикация окружения по http/https
