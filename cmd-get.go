@@ -2,7 +2,11 @@
 // and their dependencies
 package main
 
-import "github.com/go-env/pkglib"
+import (
+	"os"
+
+	"github.com/go-env/pkglib"
+)
 
 var cmdGet = &pkglib.Command{
 	UsageLine: "get [-r <repo>] [-e <env>] [-t <tag>] [-d] <packages...>",
@@ -18,7 +22,7 @@ versions. Command line args have higher priority.
 
 Run 'go help packages' — more info about specifying packages
 `,
-	CustomFlags: true,
+	CustomFlags: false,
 }
 
 var getE = cmdGet.Flag.String("e", "default", "")
@@ -40,8 +44,18 @@ func runGet(cmd *pkglib.Command, args []string) {
 
 	// Phase 1.  Download/update.
 	var stk pkglib.ImportStack
+	var cwd, _ = os.Getwd()
+
 	for _, arg := range pkglib.DownloadPaths(args) {
 		pkglib.Download(arg, &stk, false)
+		if repoRoot, err := pkglib.RepoRootForImportPath(arg); err == nil {
+			//	fmt.Printf("%+v %s\n", repoRoot, err)
+			if *getT != "" {
+				pkg := pkglib.LoadImport(arg, cwd, &stk, nil)
+				//			fmt.Printf("%+v\n", pkg)
+				repoRoot.Vcs.TagSync(pkg.Dir, *getT)
+			}
+		}
 	}
 	exitIfErrors()
 

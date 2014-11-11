@@ -130,15 +130,6 @@ func main() {
 		}
 	}
 
-	// for _, cmd := range commands {
-	// 	if cmd.Name() == args[0] {
-	// 		cmd.Flag.Usage = func() { cmd.Usage() }
-	// 		cmd.Flag.Parse(args[1:])
-	// 		cmd.Run(cmd, cmd.Flag.Args())
-	// 		return
-	// 	}
-	// }
-
 	fmt.Fprintf(os.Stderr, "gopkg: unknown command %q\n", args[0])
 	fmt.Fprintf(os.Stderr, "Run 'gopkg help' for usage.\n")
 	os.Exit(2)
